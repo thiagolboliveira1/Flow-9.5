@@ -1,0 +1,140 @@
+<!doctype html><html lang="pt-BR"><head>
+<meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>
+<title>FLOW — Finanças da Família Oliveira</title>
+<link rel='stylesheet' href='styles.css' id='maincss'>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#E8F0FF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<script>
+const cssEl=document.getElementById('maincss'); function regSW(){ if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); } }
+if (cssEl.sheet || cssEl.loaded) { regSW(); } else { cssEl.addEventListener('load', ()=>{ cssEl.loaded=true; regSW(); }); }
+</script>
+</head><body>
+<header class='topbar'>
+  <div class='brand'>
+    <button id='btnMenu' class='icon-btn' aria-controls='drawer' aria-expanded='false'>
+      <svg viewBox='0 0 24 24' width='24' height='24'><path d='M4 7h16M4 12h16M4 17h16' fill='none' stroke='#22335a' stroke-width='2' stroke-linecap='round'/></svg>
+    </button>
+    <div class='logo-inline'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 200'>
+  <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#3F7DFF'/><stop offset='1' stop-color='#2563EB'/></linearGradient></defs>
+  <rect width='640' height='200' rx='18' fill='#E8F0FF' stroke='#CDD9F5'/>
+  <g transform='translate(36,40)'>
+    <rect x='0' y='20' width='110' height='80' rx='16' fill='none' stroke='url(#g)' stroke-width='10'/>
+    <rect x='16' y='52' width='64' height='16' rx='8' fill='url(#g)'/>
+    <circle cx='100' cy='70' r='12' fill='#2563EB'/>
+  </g>
+  <text x='200' y='92' font-family='Inter,system-ui,Arial' font-size='40' fill='#0F1A3A' font-weight='800'>FLOW</text>
+  <text x='200' y='138' font-family='Inter,system-ui,Arial' font-size='20' fill='#5A6A8A'>Finanças da Família Oliveira</text>
+</svg></div>
+  </div>
+  <div class='right'>
+    <input type='month' id='filterMonth'>
+    <button id='btnPDF' class='icon-btn' title='PDF'>PDF</button>
+  </div>
+</header>
+<main class='container'>
+  <section id='tab-resumo' class='tab'>
+    <div class='card'><h2>Avisos de vencimento</h2><div id='alerts' class='stack'></div></div>
+    <div class='card'><h2>Gráfico — progresso das metas</h2><div class='canvas-wrap'><canvas id='chart' style='width:100%;max-width:900px;height:360px'></canvas></div></div>
+  </section>
+  <section id='tab-entradas' class='tab'>
+    <div class='card'><h2>Entradas do mês (Thiago + Adriele)</h2>
+      <form id='formQuick' class='stack' style='margin-bottom:12px'>
+        <select id='qOwner'><option>Thiago</option><option>Adriele</option></select>
+        <input id='qCliente' placeholder='Cliente/Serviço' required>
+        <input id='qForma' placeholder='Forma (Pix, Dinheiro...)' required>
+        <input id='qDate' type='date' required>
+        <input id='qTotal' type='number' step='0.01' inputmode='decimal' placeholder='Total do serviço (R$)' required>
+        <input id='qEntrada' type='number' step='0.01' inputmode='decimal' placeholder='Entrada (R$)' required>
+        <button class='primary'>Lançar</button>
+      </form>
+      <div class='item'><div class='meta' id='kpis'></div></div>
+      <div id='listaEntradas' class='stack'></div>
+    </div>
+  </section>
+  <section id='tab-despesas' class='tab'>
+    <div class='card'><h2>Despesas</h2>
+      <form id='formDesp' class='stack'>
+        <input id='dDate' type='date' required><input id='dCategoria' placeholder='Categoria (Shopee, Mercado...)' required>
+        <select id='dKind'><option value='fixa'>Fixa</option><option value='variavel'>Variável</option></select>
+        <input id='dValor' type='number' step='0.01' inputmode='decimal' placeholder='Valor (R$)' required>
+        <input id='dVenc' type='date' placeholder='Vencimento (opcional)'>
+        <input id='dObs' placeholder='Obs'><button class='primary'>Adicionar</button>
+      </form>
+      <div id='listaDespesas' class='stack'></div></div>
+  </section>
+  <section id='tab-parcelas' class='tab'>
+    <div class='card'><h2>Parcelamentos</h2>
+      <form id='formParc' class='stack'>
+        <input id='pNome' placeholder='Nome (ex.: Ailos, Carro)' required>
+        <input id='pParcela' type='number' step='0.01' inputmode='decimal' placeholder='Valor da parcela (R$)' required>
+        <input id='pTotal' type='number' step='1' min='1' placeholder='Total de parcelas' required>
+        <input id='pPagas' type='number' step='1' min='0' placeholder='Já pagas (opcional)'>
+        <input id='pVencDia' type='number' step='1' min='1' max='31' placeholder='Dia de venc.'>
+        <button class='primary'>Adicionar parcelamento</button>
+      </form>
+      <div id='listaParcelas' class='stack'></div>
+    </div>
+  </section>
+  <section id='tab-metas' class='tab'>
+    <div class='card'><h2>Metas</h2>
+      <form id='formMeta' class='stack'>
+        <input id='mNome' placeholder='Nome da meta' required>
+        <input id='mAlvo' type='number' step='0.01' inputmode='decimal' placeholder='Valor alvo (R$)' required>
+        <input id='mPrazo' type='month' placeholder='Prazo (opcional)'>
+        <button class='primary'>Adicionar meta</button>
+      </form>
+      <div class='stack' style='margin-top:12px'>
+        <div class='item'>
+          <div class='top'><strong>Autoalocação nas novas entradas</strong></div>
+          <div id='alocacoes' class='stack'></div>
+          <div class='top' style='gap:16px;flex-wrap:wrap'>
+            <label>Aplicar automaticamente nas novas entradas <input type='checkbox' id='autoApply'></label>
+            <label>Simular sobre <input type='number' id='simValor' step='0.01' inputmode='decimal' value='1000' style='width:120px'> R$</label>
+            <button id='saveAlloc' class='primary'>Salvar alocação</button>
+          </div>
+          <div id='alocPrev' class='stack'></div>
+        </div>
+        <div class='item'>
+          <div class='top'><strong>Distribuir do saldo disponível</strong><span id='saldoDisp' class='badge'>Saldo disp.: R$ 0,00</span></div>
+          <label>Percentual do líquido a investir este mês <input type='number' id='pctMes' value='20' min='0' max='60'> %</label>
+          <div id='distSug' class='stack'></div>
+          <button id='btnAplicarDist' class='primary'>Aplicar distribuição</button>
+        </div>
+      </div>
+      <div id='metas' class='stack'></div>
+    </div>
+  </section>
+  <section id='tab-backup' class='tab'>
+    <div class='card'><h2>Backup</h2><button id='btnExport' class='primary'>Exportar</button>
+    <input type='file' id='fileImport' accept='application/json'><button id='btnImport'>Importar</button></div>
+  </section>
+</main>
+<footer class='bottombar'>FLOW — Finanças da Família Oliveira • v9.5 REAL</footer>
+<div class='drawer-overlay' id='drawerOverlay'></div>
+<aside class='drawer' id='drawer' aria-hidden='true'>
+  <header><div class='logo-inline' style='width:160px'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 200'>
+  <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#3F7DFF'/><stop offset='1' stop-color='#2563EB'/></linearGradient></defs>
+  <rect width='640' height='200' rx='18' fill='#E8F0FF' stroke='#CDD9F5'/>
+  <g transform='translate(36,40)'>
+    <rect x='0' y='20' width='110' height='80' rx='16' fill='none' stroke='url(#g)' stroke-width='10'/>
+    <rect x='16' y='52' width='64' height='16' rx='8' fill='url(#g)'/>
+    <circle cx='100' cy='70' r='12' fill='#2563EB'/>
+  </g>
+  <text x='200' y='92' font-family='Inter,system-ui,Arial' font-size='40' fill='#0F1A3A' font-weight='800'>FLOW</text>
+  <text x='200' y='138' font-family='Inter,system-ui,Arial' font-size='20' fill='#5A6A8A'>Finanças da Família Oliveira</text>
+</svg></div><strong>Menu</strong></header>
+  <nav>
+    <a class='link' href='#' data-go='resumo'>🏠 <b>Resumo</b></a>
+    <a class='link' href='#' data-go='entradas'>➕ <b>Entradas</b></a>
+    <a class='link' href='#' data-go='despesas'>💸 <b>Despesas</b></a>
+    <a class='link' href='#' data-go='parcelas'>📦 <b>Parcelas</b></a>
+    <a class='link' href='#' data-go='metas'>🎯 <b>Metas</b></a>
+    <a class='link' href='#' data-go='backup'>🗄 <b>Backup</b></a>
+    <hr><a class='link' href='#' id='goPDF'>🖨 <b>PDF do mês</b></a>
+  </nav>
+</aside>
+<script src='app.js'></script>
+</body></html>
